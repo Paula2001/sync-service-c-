@@ -1,0 +1,101 @@
+# --- OS files ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.Spotlight-V100/
+.Trashes/
+._*
+
+# --- Editor / IDE ---
+.vscode/
+.idea/
+*.iml
+*.suo
+*.user
+*.userossc
+*.sln.docstates
+*.swp
+*.swo
+*~
+
+# --- Logs / temp ---
+*.log
+*.out
+*.err
+*.pid
+*.pid.lock
+*.tmp
+*.temp
+.cache/
+tmp/
+temp/
+
+# --- Environment / secrets ---
+.env
+.env.*
+!.env.example
+!.env.sample
+*.local
+
+# --- Dependency directories ---
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+vendor/
+
+# --- Build / coverage outputs ---
+dist/
+build/
+out/
+coverage/
+.nyc_output/
+.next/
+.nuxt/
+.svelte-kit/
+.parcel-cache/
+vite.svg
+*.tsbuildinfo
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+htmlcov/
+
+# --- Java / JVM ---
+.gradle/
+*.class
+
+# --- .NET ---
+bin/
+obj/
+
+# --- Go ---
+.coverprofile
+
+# --- Rust ---
+target/
+
+# --- Terraform ---
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# --- Archives ---
+*.zip
+*.tar
+*.gz
+*.7z
+*.rar
