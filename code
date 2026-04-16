@@ -1,0 +1,64 @@
+var watcher = new FileSystemWatcher
+        {
+            Path = "/Users/paula/sync/source",
+            NotifyFilter = NotifyFilters.FileName
+                                 | NotifyFilters.DirectoryName
+                                 | NotifyFilters.LastWrite,
+
+            Filter = "*.*"
+        };
+
+        watcher.Created += (s, e) =>
+            Console.WriteLine($"Created: {e.FullPath}");
+
+        watcher.Deleted += (s, e) =>
+            Console.WriteLine($"Deleted: {e.FullPath}");
+
+        watcher.Changed += (s, e) =>
+            Console.WriteLine($"Changed: {e.FullPath}");
+
+        watcher.Renamed += (s, e) =>
+            Console.WriteLine($"Renamed: {e.OldFullPath} -> {e.FullPath}");
+
+        watcher.EnableRaisingEvents = true;
+
+        Console.WriteLine("Watching...");
+        Console.ReadLine();
+
+
+    --------
+
+
+
+using System;
+using System.IO;
+using System.Security.Cryptography;
+
+class Program
+{
+    static string GetMd5(string filePath)
+    {
+        using var md5 = MD5.Create();
+        using var stream = File.OpenRead(filePath);
+
+        byte[] hash = md5.ComputeHash(stream);
+        return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+    }
+
+    static void Main()
+    {
+        string file1 = "fileA.txt";
+        string file2 = "fileB.txt";
+
+        string hash1 = GetMd5(file1);
+        string hash2 = GetMd5(file2);
+
+        Console.WriteLine($"File1 MD5: {hash1}");
+        Console.WriteLine($"File2 MD5: {hash2}");
+
+        if (hash1.Equals(hash2))
+            Console.WriteLine("Files are likely identical");
+        else
+            Console.WriteLine("Files are different");
+    }
+}

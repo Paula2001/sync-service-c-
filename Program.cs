@@ -1,42 +1,60 @@
-﻿ class Program
+﻿using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Threading;
+using sync.Enums;
+
+class Program
 {
-    // add tests to test the commands and test the sync and logs and the commands
-    // Folder paths, synchronization interval and log file path should be provided using
-    // the command line arguments;
+    static void Menu()
+    {
+        Console.WriteLine("Press 1 - For printing folder content.");
+        Console.WriteLine("Thread 1 is starting expensive operation...");
+    }
+
     static void Main()
     {
-
-
-        // Synchronization should be performed periodically; md5 to check what's updated and what's not when start
-
-        // watching while running the project  listening to the system events
-        //File creation/copying/removal operations should be logged to a file and to the
-        // console output;
-        var watcher = new FileSystemWatcher
+        Thread t = new(new ThreadStart(() => 
         {
-            Path = "/Users/paula/sync/source",
-            NotifyFilter = NotifyFilters.FileName
-                                 | NotifyFilters.DirectoryName
-                                 | NotifyFilters.LastWrite,
+            Menu();
+            while (true)
+            {
+                string? consoleLine = Console.ReadLine();
+                if (consoleLine != null)
+                {
+                    var result = Enum.TryParse(consoleLine, ignoreCase: true, out CommandsEnum cmd);
+                    
+                    if (cmd.Equals(CommandsEnum.EXIT))
+                    {
+                        Console.WriteLine("bye bye");
+                        break;
+                    }               
+                
+                    switch (cmd)
+                    {
+                        case CommandsEnum.PATHS:
+                            Console.WriteLine("this should print paths");
+                            break;
+                        default:
+                            Console.WriteLine("command not found");
+                            break;
+                    }
+                
+                }
+                
+            }
+        }));
+        Thread t2 = new(new ThreadStart(() => 
+        {
+            Console.WriteLine("Thread 2: Expensive operation complete.");
+        }));
+        t2.Start();
+        t.Start();
 
-            Filter = "*.*"
-        };
+        // Wait for both threads to finish
+        t.Join(); 
+        t2.Join();
 
-        watcher.Created += (s, e) =>
-            Console.WriteLine($"Created: {e.FullPath}");
-
-        watcher.Deleted += (s, e) =>
-            Console.WriteLine($"Deleted: {e.FullPath}");
-
-        watcher.Changed += (s, e) =>
-            Console.WriteLine($"Changed: {e.FullPath}");
-
-        watcher.Renamed += (s, e) =>
-            Console.WriteLine($"Renamed: {e.OldFullPath} -> {e.FullPath}");
-
-        watcher.EnableRaisingEvents = true;
-
-        Console.WriteLine("Watching...");
-        Console.ReadLine();
+        Console.WriteLine("Both threads have finished and were automatically cleaned up by the CLR.");
     }
 }
