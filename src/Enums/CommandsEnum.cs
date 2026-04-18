@@ -7,5 +7,6 @@ enum CommandsEnum
     INTERVAL = 3,
     LOG = 4,
     CONFIG = 5,
-    EXIT = 6
+    READ_LOGS = 6,
+    EXIT = 7
 }

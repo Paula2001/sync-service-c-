@@ -3,16 +3,20 @@ using Microsoft.Extensions.DependencyInjection;
 using sync.src.Commands;
 using sync.DataManagement;
 
-namespace sync.src;
+namespace sync;
 class Program
 {
 
-    static void Main()
+    static async Task Main()
     {
         ServiceCollection services = new();
-
-        services.AddSingleton<LoadConfigCommand>();
-        services.AddSingleton<SetSourceFolderCommand>();
+        
+        typeof(CommandBase).Assembly
+            .GetTypes()
+            .Where(t => t.IsSubclassOf(typeof(CommandBase)) && !t.IsAbstract)
+            .ToList()
+            .ForEach(t => services.AddSingleton(t));
+        
         services.AddSingleton<CancellationTokenSource>();
         services.AddSingleton<CommandsHandler>();
         services.AddSingleton<Config>();
@@ -25,7 +29,15 @@ class Program
 
         // Run the app
         var app = provider.GetRequiredService<Application>();
-        app.Run();
+        try
+        {
+            await app.Run();
+        }
+        catch (OperationCanceledException) { }
+        finally
+        {
+            Environment.Exit(0);
+        }
     }
 
 }

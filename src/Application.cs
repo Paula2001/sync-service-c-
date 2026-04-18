@@ -1,17 +1,15 @@
 using sync.src.Commands;
 using sync.DataManagement;
-using Spectre.Console;
+
 namespace sync;
 
 public sealed class Application(CommandsHandler commandsHandler, FolderSync folderSync)
 {
-    public void Run()
+    public async Task Run()
     {
-        var t = new Thread(new ThreadStart(() => commandsHandler.RecieveCommand()));
-        t.Start();
-        
-        var t2 = folderSync.Read();
-        t.Join();
-        t2.Join();
+        await Task.WhenAll(
+            Task.Run(() => commandsHandler.RecieveCommand()),
+            folderSync.Read()
+        );
     }
 }

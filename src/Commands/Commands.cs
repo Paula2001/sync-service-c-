@@ -1,10 +1,12 @@
 using sync.Enums;
 using Spectre.Console;
+using System.Text.Json;
 
 namespace sync.src.Commands;
 public class CommandsHandler(
     SetSourceFolderCommand setSourceFolderCommand,
     LoadConfigCommand loadConfigCommand,
+    ReadLogsCommand readLogsCommand,
     CancellationTokenSource cts
 ) {
     public bool Stop {get; set;} = false;
@@ -12,7 +14,8 @@ public class CommandsHandler(
    private Dictionary<CommandsEnum, CommandBase> _commands = new Dictionary<CommandsEnum, CommandBase>
     {
         { CommandsEnum.SOURCE, setSourceFolderCommand },
-        { CommandsEnum.CONFIG, loadConfigCommand }
+        { CommandsEnum.CONFIG, loadConfigCommand },
+        { CommandsEnum.READ_LOGS, readLogsCommand }
     };
 
     public void RecieveCommand()
@@ -21,21 +24,20 @@ public class CommandsHandler(
             {
                 cts.Token.ThrowIfCancellationRequested();
                 var features = AnsiConsole.Prompt(new SelectionPrompt<string>()
-                .Title("Select [green]features[/] to enable:")
+                .Title("Select [green]Command[/] :")
                 .AddChoices(
                     "Source", 
                     "Target", 
                     "Interval", 
                     "Log",
                     "Config",
+                    "Read Logs",
                     "Exit"
                 ));
-
-
-                AnsiConsole.MarkupLine($"Enabled: [blue]{string.Join(", ", features)}[/]");
         
                 if (features != null)
                 {
+                    features = JsonNamingPolicy.SnakeCaseLower.ConvertName(features);
                     if(Enum.TryParse(features, ignoreCase: true, out CommandsEnum cmd))
                     {
                         if (cmd == CommandsEnum.EXIT)
@@ -51,15 +53,8 @@ public class CommandsHandler(
                         }  
                     }
                     
-                    
-
-
-
                     // switch (cmd)
                     // {
-                    //     case CommandsEnum.SOURCE:
-                    //         conf.SourceFolder = Console.ReadLine() ?? conf.SourceFolder;
-                    //         break;
                     //     case CommandsEnum.TARGET:
                     //         Console.Write("Enter target folder path: ");
                     //         conf.TargetFolder = Console.ReadLine() ?? conf.TargetFolder;
@@ -71,13 +66,6 @@ public class CommandsHandler(
                     //     case CommandsEnum.LOG:
                     //         Console.Write("Enter log file path: ");
                     //         conf.LogFilePath = Console.ReadLine() ?? "./logs";
-                    //         break;
-                    //     case CommandsEnum.CONFIG:
-                    //         Console.WriteLine("\n--- Current Configuration ---");
-                    //         Console.WriteLine($"Source: {conf.SourceFolder}");
-                    //         Console.WriteLine($"Target: {conf.TargetFolder}");
-                    //         Console.WriteLine($"Interval: {conf.TimeIntervalInSeconds}s");
-                    //         Console.WriteLine($"Log Path: {conf.LogFilePath}\n");
                     //         break;
                     //     default:
                     //         Console.WriteLine("Command not recognized.");
