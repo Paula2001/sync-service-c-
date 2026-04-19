@@ -1,53 +1,84 @@
 using System.Text.Json;
+using System.Threading.Channels;
 
 namespace sync.Logger;
 
-public class FileLogger(Config config)
+public class FileLogger
 {
-    private bool IsLogFileAvailable()
+    private readonly Config _config;
+
+    private readonly Channel<Log> _channel;
+    private readonly CancellationTokenSource _cts = new();
+    private readonly Task _consumerTask;
+
+    public FileLogger(Config config)
     {
-        return File.Exists(config.LogFilePath);
+        _config = config;
+
+        _channel = Channel.CreateUnbounded<Log>(new UnboundedChannelOptions
+        {
+            SingleReader = true,
+            SingleWriter = false
+        });
+
+        _consumerTask = Task.Run(ProcessQueueAsync);
     }
 
-    private void CreateIfLogFileDoesntExist()
+    public void Log(Log log)
     {
-        if (!IsLogFileAvailable())
+        _channel.Writer.WriteAsync(log);
+    }
+
+    private async Task ProcessQueueAsync()
+    {
+        await foreach (var log in _channel.Reader.ReadAllAsync(_cts.Token))
         {
-            using var file = File.Create(config.LogFilePath);
+            await WriteLogAsync(log);
         }
     }
 
-    private string FormatLog(Log log)
+    private async Task WriteLogAsync(Log log)
     {
-        return $"{log.TimeStamp} {log.FileOperation} {log.FileName}";
-    }
+        Dictionary<string, Timestamp> data;
 
-    public async void Log(Log log)
-    {
-        if (IsLogFileAvailable())
+        if (File.Exists(_config.LogFilePath))
         {
-            FormatLog(log);
-            using var stream = File.OpenRead(config.LogFilePath);
-            var data = await JsonSerializer.DeserializeAsync<LogFile>(stream);
-            data[DateTime.Now.ToString()] = new Timestamp
-            {
-                FileName = log.FileName,
-                Operation = log.FileOperation
-            };
-            var updatedJson = JsonSerializer.Serialize(data, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
-
-            await File.WriteAllTextAsync(config.LogFilePath, updatedJson);
+            await using var stream = File.OpenRead(_config.LogFilePath);
+            data = await JsonSerializer.DeserializeAsync<Dictionary<string, Timestamp>>(stream)
+                   ?? new();
         }
+        else
+        {
+            data = new();
+        }
+
+        data[DateTime.UtcNow.ToString("O")] = new Timestamp
+        {
+            FileName = log.FileName,
+            Operation = log.FileOperation
+        };
+
+        var json = JsonSerializer.Serialize(data, new JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+
+        await File.WriteAllTextAsync(_config.LogFilePath, json);
     }
 
     public async Task<string> ReadLogsAsync()
     {
-        CreateIfLogFileDoesntExist();
-        var fileData = await File.ReadAllTextAsync(config.LogFilePath) ;
-        return fileData;
+        if (!File.Exists(_config.LogFilePath))
+            return "{}";
+
+        return await File.ReadAllTextAsync(_config.LogFilePath);
     }
 
+    public async Task StopAsync()
+    {
+        _channel.Writer.Complete();
+        _cts.Cancel();
+
+        await _consumerTask;
+    }
 }

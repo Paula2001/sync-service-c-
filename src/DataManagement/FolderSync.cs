@@ -11,8 +11,39 @@ public async Task ReadAsync()
     {
         try
         {
-            var files = Directory.GetFiles(config.SourceFolder);
 
+        var files = Directory.GetFiles(config.SourceFolder);
+        var targetFiles = Directory.GetFiles(config.TargetFolder);
+
+        var fileNames = new HashSet<string?>(
+            files.Select(Path.GetFileName)
+        );
+
+        var missingFiles = targetFiles
+            .Where(f => !fileNames.Contains(Path.GetFileName(f)))
+            .ToArray();
+
+        if(missingFiles.Length > 0)
+        {
+            foreach (var file in missingFiles)
+            {
+                if (File.Exists(file))
+                {
+                    Console.WriteLine(Path.GetFileName(file));
+                    File.Delete(file);
+                    log.Log(
+                        new()
+                        {
+                            FileName  = Path.GetFileName(file),
+                            FileOperation = FileOperation.DELETE.ToString()
+                        }
+                    );   
+                }   
+            }
+        }
+
+
+            files = Directory.GetFiles(config.SourceFolder);
             foreach (var file in files)
             {
                 cts.Token.ThrowIfCancellationRequested();
